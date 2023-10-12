@@ -46,12 +46,11 @@ with open(filename, 'r+') as file:
         sys.exit(1)
 
     csvReader = csv.reader(file)
-    allPassword = {}
-    for row in csvReader:
-        allPassword[row[0]] = row[1]
-
+    allPassword = {row[0]: row[1] for row in csvReader}
     if username.upper() in (name.upper() for name in allPassword):
-        print("A10102: USERNAME '" + username + "' already exists. USERNAME is case insensitive.")
+        print(
+            f"A10102: USERNAME '{username}' already exists. USERNAME is case insensitive."
+        )
         sys.exit(1)
 
     if options.password is not None:
@@ -74,7 +73,7 @@ with open(filename, 'r+') as file:
     allPassword[username] = digest
 
     os.umask(0)
-    tmpfilename = filename + ".tmp"
+    tmpfilename = f"{filename}.tmp"
     with open(tmpfilename, 'w+') as tmpfile:
         csvWriter = csv.writer(tmpfile)
         for row in list(allPassword.items()):

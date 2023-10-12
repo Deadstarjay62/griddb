@@ -33,17 +33,14 @@ filename = os.path.join(homedir, "conf/password")
 with open(filename, 'r+') as file:
     try:
         fcntl.flock(file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except(IOError):
-        print("AB0101: Failed to lock file '" + filename + "'.")
+    except IOError:
+        print(f"AB0101: Failed to lock file '{filename}'.")
         sys.exit(1)
 
     csvReader = csv.reader(file)
-    allPassword = {}
-    for row in csvReader:
-        allPassword[row[0]] = row[1]
-
+    allPassword = {row[0]: row[1] for row in csvReader}
     if username not in allPassword:
-        print("AB0102: USERNAME '" + username + "' does not exist.")
+        print(f"AB0102: USERNAME '{username}' does not exist.")
         sys.exit(1)
 
     if options.password is not None:
@@ -66,7 +63,7 @@ with open(filename, 'r+') as file:
     allPassword[username] = digest
 
     os.umask(0)
-    tmpfilename = filename + ".tmp"
+    tmpfilename = f"{filename}.tmp"
     with open(tmpfilename, 'w+') as tmpfile:
         csvWriter = csv.writer(tmpfile)
         for row in list(allPassword.items()):

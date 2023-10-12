@@ -14,10 +14,11 @@ import util
 util.install_sigint_handler()
 (homedir,logdir) = util.get_required_env()
 
-parser = OptionParser(usage="%prog [-c NAME] [-n NUM] [-w [WAIT_TIME]]"
-                      + util.CLIENT_OPTIONS_USAGE,
-                      description="Join the started node to a cluster.",
-            version="[V2.8.00]")
+parser = OptionParser(
+    usage=f"%prog [-c NAME] [-n NUM] [-w [WAIT_TIME]]{util.CLIENT_OPTIONS_USAGE}",
+    description="Join the started node to a cluster.",
+    version="[V2.8.00]",
+)
 util.add_client_options(parser)
 parser.add_option("-c", "--clusterName", dest="clusterName",
                   default="defaultCluster",
@@ -37,20 +38,24 @@ if options.wait_time is not None:
     try:
         wait_time = int(options.wait_time)
     except ValueError:
-        print("A70002: Specify the correct number of seconds to wait. (-w "+options.wait_time+")")
+        print(
+            f"A70002: Specify the correct number of seconds to wait. (-w {options.wait_time})"
+        )
         sys.exit(2)
 if options.minNodeNum == 0:
-    print("A70003: Specify the number of nodes more than 0. (-n "+str(options.minNodeNum)+")")
+    print(
+        f"A70003: Specify the number of nodes more than 0. (-n {str(options.minNodeNum)})"
+    )
     sys.exit(2)
 
 log = log.logger(__file__, log.DEBUG)
-log.info("%s start." % (__file__))
+log.info(f"{__file__} start.")
 tmpoptions = copy.deepcopy(options)
 tmpoptions.password = "***"
 log.info(tmpoptions)
 
-e = 0
 nodestat: Optional[str] = util.get_nodestat(options, log)
+e = 0
 if nodestat != "INACTIVE":
     e = 1
     if nodestat is not None:
@@ -60,7 +65,7 @@ if nodestat != "INACTIVE":
             e = 3
         else:
             print("A70102: Confirm node status.")
-            log.error("A70102: Confirm node status. (status="+nodestat+")")
+            log.error(f"A70102: Confirm node status. (status={nodestat})")
     sys.exit(e)
 
 method = "POST"
@@ -93,11 +98,11 @@ if options.wait_time is not None:
             e = 2
             break
     util.wait_error_case(e,log,"\nJoined node")
-    log.debug("%s end." % (__file__))
+    log.debug(f"{__file__} end.")
     sys.exit(e)
 
 if code != 200:
     sys.exit(1)
 
-log.info("%s end." % (__file__))
+log.info(f"{__file__} end.")
 

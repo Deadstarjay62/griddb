@@ -20,9 +20,9 @@ class ClusterConfig:
         self.jdbc_port = None
 
 GS_HOME = "/var/lib/gridstore"
-GS_CLUSTER = GS_HOME + "/conf/gs_cluster.json"
-GS_NODE = GS_HOME + "/conf/gs_node.json"
-init_gsh = GS_HOME + "/.gsshrc"
+GS_CLUSTER = f"{GS_HOME}/conf/gs_cluster.json"
+GS_NODE = f"{GS_HOME}/conf/gs_node.json"
+init_gsh = f"{GS_HOME}/.gsshrc"
 GS_USER = "admin"
 GS_PASSWORD = "admin"
 addressNodeLocal = "127.0.0.1"
@@ -43,21 +43,38 @@ def create_member(fixedlist,module):
 def create_init_gsh(conf):
     with open(init_gsh, "w") as src:
         src.write("#Created when installed griddb ce\n")
-        node_def = ""
         cluster_def = "cluster0"
         src.write("setnode node0" + " " + addressNodeLocal + " " + str(conf.port) + " " + "22\n")
-        node_def = node_def + " $node0" 
+        node_def = "" + " $node0"
         if conf.ntf_mode == "MULTICAST":
-            src.write("setcluster " + cluster_def + " " + conf.name + " " + conf.ntf_addr + " " + str(conf.ntf_port) + "\n")
+            src.write(
+                f"setcluster {cluster_def} {conf.name} {conf.ntf_addr} {str(conf.ntf_port)}"
+                + "\n"
+            )
             if conf.jdbc_addr:
-                src.write("setclustersql " + cluster_def + " " + conf.name + " " + conf.jdbc_addr + " " + str(conf.jdbc_port) + "\n")
+                src.write(
+                    f"setclustersql {cluster_def} {conf.name} {conf.jdbc_addr} {str(conf.jdbc_port)}"
+                    + "\n"
+                )
         elif conf.ntf_mode == "FIXED_LIST":
-            src.write("setcluster " + cluster_def + " " + conf.name + " " + conf.ntf_mode + " " + conf.member_transaction + node_def + "\n")
-            src.write("setclustersql " + cluster_def + " " + conf.name + " " + conf.ntf_mode + " " + conf.member_sql + "\n")
+            src.write(
+                f"setcluster {cluster_def} {conf.name} {conf.ntf_mode} {conf.member_transaction}{node_def}"
+                + "\n"
+            )
+            src.write(
+                f"setclustersql {cluster_def} {conf.name} {conf.ntf_mode} {conf.member_sql}"
+                + "\n"
+            )
         elif conf.ntf_mode == "PROVIDER":
-            src.write("setcluster " + cluster_def + " " + conf.name + " " + conf.ntf_mode + " " + conf.ntf_provider + node_def + "\n")
-            src.write("setclustersql " + cluster_def + " " + conf.name + " " + conf.ntf_mode + " " + conf.ntf_provider + "\n")
-        src.write("setuser " + GS_USER + " " + GS_PASSWORD + "\n")
+            src.write(
+                f"setcluster {cluster_def} {conf.name} {conf.ntf_mode} {conf.ntf_provider}{node_def}"
+                + "\n"
+            )
+            src.write(
+                f"setclustersql {cluster_def} {conf.name} {conf.ntf_mode} {conf.ntf_provider}"
+                + "\n"
+            )
+        src.write(f"setuser {GS_USER} {GS_PASSWORD}" + "\n")
         src.write("connect $cluster0\n")
 
 with open(GS_CLUSTER) as jsonFile:

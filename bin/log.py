@@ -7,7 +7,7 @@ import logging.handlers
 def logger(binfile, level):
     logdir = os.environ["GS_LOG"]
     filebase = os.path.basename(binfile)
-    logFile = os.path.join(logdir, filebase + ".log")
+    logFile = os.path.join(logdir, f"{filebase}.log")
     log = logging.getLogger()
     handler = logging.handlers.RotatingFileHandler(
         logFile, maxBytes=(5*1024*1024), backupCount=10)
