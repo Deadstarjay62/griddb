@@ -15,9 +15,11 @@ import util
 util.install_sigint_handler()
 (homedir,logdir) = util.get_required_env()
 
-parser = OptionParser(usage="%prog [-a ADDR_TYPE]"+ util.CLIENT_OPTIONS_USAGE,
-                      description="Obtains internal information of a node.",
-            version="%prog [V2.8.00]")
+parser = OptionParser(
+    usage=f"%prog [-a ADDR_TYPE]{util.CLIENT_OPTIONS_USAGE}",
+    description="Obtains internal information of a node.",
+    version="%prog [V2.8.00]",
+)
 util.add_client_options(parser)
 parser.add_option("-a", "--address-type", type="string",
         action="callback", callback=util.check_addr_type, dest="addr_type",
@@ -34,7 +36,7 @@ if options.username is None:
     sys.exit(2)
 
 log = log.logger(__file__, log.DEBUG)
-log.info("%s start." % (__file__))
+log.info(f"{__file__} start.")
 
 path = "/node/stat"
 data = {}
@@ -51,5 +53,5 @@ if code != 200:
     log.error("AE0105: Failed to get stat.")
     sys.exit(1)
 
-log.info("%s end." % (__file__))
+log.info(f"{__file__} end.")
 

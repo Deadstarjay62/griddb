@@ -19,7 +19,9 @@ from typing import Optional
 def checkserver(option, opt_str, value, parser):
     m = re.match(r"^([^:]+?)(?::(\d+))?$", value)
     if m is None:
-        raise OptionValueError("A00001: If you use %s option, specify HOST or HOST:PORT style." % opt_str)
+        raise OptionValueError(
+            f"A00001: If you use {opt_str} option, specify HOST or HOST:PORT style."
+        )
     parser.values.server = m.group(1)
     if m.group(2) is not None:
         parser.values.port = m.group(2)
@@ -27,7 +29,9 @@ def checkserver(option, opt_str, value, parser):
 def checkuser(option, opt_str, value, parser):
     m = re.match(r"(.+?)/(.+)$", value)
     if m is None:
-        raise OptionValueError("A00002: If you use %s option, specify USER/PASS style." % opt_str)
+        raise OptionValueError(
+            f"A00002: If you use {opt_str} option, specify USER/PASS style."
+        )
     parser.values.username = m.group(1)
     parser.values.password = m.group(2)
 
@@ -55,13 +59,13 @@ def request_rest(method, path, data, options, log):
     If successful, HTTP status code is 200.
     Response body is None with the exception of the success.
     '''
-    url = "http://%s:%s%s" % (options.server, options.port, path)
+    url = f"http://{options.server}:{options.port}{path}"
     passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
     passman.add_password(None, url, options.username, options.password)
     authhandler = urllib.request.HTTPBasicAuthHandler(passman)
     opener = urllib.request.build_opener(authhandler)
     urllib.request.install_opener(opener)
-    
+
     httperr_msg_dict = {
         100: "A01100: Specified cluster name is wrong.",
         101: "A01101: Specified cluster name is wrong.",
@@ -76,7 +80,7 @@ def request_rest(method, path, data, options, log):
             data = {}
         if method == "GET":
             data = urllib.parse.urlencode(data)
-            f = urllib.request.urlopen(url + "?%s" % data, timeout=30)
+            f = urllib.request.urlopen(f"{url}?{data}", timeout=30)
         if method == "POST":
             data = urllib.parse.urlencode(data)
             f = urllib.request.urlopen(url, strToBytes(data), timeout=30)
@@ -94,7 +98,7 @@ def request_rest(method, path, data, options, log):
                 err_reason = ""
                 err_message = None
                 res: Optional[str] = bytesToStr(e.read())
-                if res != None and res != "":
+                if res not in [None, ""]:
                     res_json = json.loads(res)
                     err_status = res_json.get("errorStatus")
                     err_reason = res_json.get("reason")
@@ -103,7 +107,7 @@ def request_rest(method, path, data, options, log):
                 err_message = "A00100: Failed request."
             print(err_message)
             # log.error(str(e) + " status: " + str(err_status) + " reason: " + err_reason)
-            log.error(str(e) + " reason: " + str(err_reason))
+            log.error(f"{str(e)} reason: {str(err_reason)}")
         elif e.code == 401:
             if hasattr(options, "silent"):
                 print("A00101: Stops without wait, because authentication error occurred.")
@@ -111,21 +115,23 @@ def request_rest(method, path, data, options, log):
             print("A00102: Authentication error occurred.")
             print("Confirm user name and password.")
             log.error(str(e))
-        elif e.code == 403 or e.code == 503:
-            print("A00110: Confirm network setting. (" + str(e) + ")")
+        elif e.code in [403, 503]:
+            print(f"A00110: Confirm network setting. ({str(e)})")
             log.error(str(e))
         else:
-            print("A00103: Error occurred (" + str(e) + ").")
+            print(f"A00103: Error occurred ({str(e)}).")
             log.error(str(e))
         return (None, e.code)
 
     except urllib.error.URLError as e:
         if hasattr(options, "silent"):
             return (None, 0)
-        print("A00104: Failed to connect node. (node="+options.server+":"+str(options.port)+")")
+        print(
+            f"A00104: Failed to connect node. (node={options.server}:{str(options.port)})"
+        )
         print("Confirm node is started.")
         print("URLError", e)
-        log.error("URLError " + str(e)+ " (node="+options.server+":"+str(options.port)+")")
+        log.error(f"URLError {str(e)} (node={options.server}:{str(options.port)})")
         return (None, 0)
 
 def handler(signum, frame):
@@ -144,7 +150,7 @@ def check_variables():
     if "GS_LOG" not in os.environ:
         err_envs.append("GS_LOG")
     if err_envs:
-        print("A00105: %s environment variable not set." % ", ".join(err_envs))
+        print(f'A00105: {", ".join(err_envs)} environment variable not set.')
         return True
 
     homedir = os.environ["GS_HOME"]
@@ -155,7 +161,9 @@ def check_variables():
     if not os.path.exists(logdir):
         err_envs.append("GS_LOG")
     if err_envs:
-        print("A00106: Directory of %s environment variable does not exist." % ", ".join(err_envs))
+        print(
+            f'A00106: Directory of {", ".join(err_envs)} environment variable does not exist.'
+        )
         return True
 
     return False
@@ -203,10 +211,7 @@ def psexists(pid, name):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
                             close_fds=True)
-    line = p2.stdout.readline()
-    if line:
-        return 1
-    return 0
+    return 1 if (line := p2.stdout.readline()) else 0
 
 def wait_one_sec():
     time.sleep(1)
@@ -214,11 +219,9 @@ def wait_one_sec():
     sys.stdout.flush()
 
 def get_rest_addr_list(options,log):
-    addr = []
-    port = []
     (a,p) = get_master_addr(options,log)
-    addr.append(a)
-    port.append(p)
+    addr = [a]
+    port = [p]
     if addr is None:
         return (None,None)
     options.server = addr[0]
@@ -294,22 +297,20 @@ def get_critical_node_addr(options,log):
     while i < len(pstat):
         ownerExists = True
         backupExists = True
-        
+
         owner = pstat[i].get("owner")
         if owner is None :
             ownerExists = False
-        
+
         backup = pstat[i].get("backup")
         if len(backup) == 0:
             backupExists = False
-            
+
         if ownerExists and (not backupExists):
             addr.append([owner.get("address"), owner.get("port")])
-            
-        if (not ownerExists) and backupExists:
-            for b in backup:
-                addr.append([b.get("address"), b.get("port")])
 
+        if (not ownerExists) and backupExists:
+            addr.extend([b.get("address"), b.get("port")] for b in backup)
         i += 1
     return addr
                 
@@ -322,19 +323,15 @@ def is_critical_node(options,log):
     caddr = nodestat.get("cluster").get("nodeList")[0]
     addr = get_critical_node_addr(options, log)
     i = 0
-    
+
     myselfAddress = [caddr.get("address"), caddr.get("port")]
-    if myselfAddress in addr:
-        return 1
-    return 0
+    return 1 if myselfAddress in addr else 0
     
 def is_active_cluster(options,log):
     clusterstat: Optional[str] = get_clusterstat(options,log)
     if clusterstat is None:
         return None
-    if clusterstat == "MASTER" or clusterstat == "FOLLOWER":
-        return 1
-    return 0
+    return 1 if clusterstat in ["MASTER", "FOLLOWER"] else 0
 
 def wait_error_case(e,log,msg):
     if e == 0:
@@ -353,7 +350,9 @@ def check_addr_type(option, opt_str, value, parser):
         parser.values.addr_type = value
         return 0
     else:
-        print("A00109: The value of address-type option must be %s. (" % "/".join(map(str, addr_type_list)) +opt_str+"="+value+")") 
+        print(
+            f'A00109: The value of address-type option must be {"/".join(map(str, addr_type_list))}. ({opt_str}={value})'
+        )
         sys.exit(2)
 
 def write_pidfile(pidfile):

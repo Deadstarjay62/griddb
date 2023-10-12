@@ -12,9 +12,11 @@ import util
 util.install_sigint_handler()
 (homedir,logdir) = util.get_required_env()
 
-parser = OptionParser(usage="%prog [-f] [-w [WAIT_TIME]]" + util.CLIENT_OPTIONS_USAGE,
-                      description="Leave a node from a cluster.",
-            version="%prog [V2.8.00]")
+parser = OptionParser(
+    usage=f"%prog [-f] [-w [WAIT_TIME]]{util.CLIENT_OPTIONS_USAGE}",
+    description="Leave a node from a cluster.",
+    version="%prog [V2.8.00]",
+)
 util.add_client_options(parser)
 parser.add_option("-f", "--force", dest="force",
                   action="store_true", default=False,
@@ -31,11 +33,13 @@ if options.wait_time is not None:
     try:
         wait_time = int(options.wait_time)
     except ValueError:
-        print("A80002: Specify the correct number of seconds to wait. (-w "+options.wait_time+")")
+        print(
+            f"A80002: Specify the correct number of seconds to wait. (-w {options.wait_time})"
+        )
         sys.exit(2)
 
 log = log.logger(__file__, log.DEBUG)
-log.info("%s start." % (__file__))
+log.info(f"{__file__} start.")
 tmpoptions = copy.deepcopy(options)
 tmpoptions.password = "***"
 log.info(tmpoptions)
@@ -44,16 +48,15 @@ e = 0
 nodestat: Optional[str] = util.get_nodestat(options, log)
 if nodestat != "ACTIVE":
     e = 1
-    if nodestat is not None:
-        if nodestat == "INACTIVE":
-            print("A80101: Node is not joined.")
-            log.error("A80101: Node is not joined. (status="+nodestat+")")
-            e = 3
-        else:
-            print("A80102: Confirm node status.")
-            log.error("A80102: Node is the wrong status to leave. (status="+nodestat+")")
-    else:
+    if nodestat is None:
         log.error("A80104: Unable to retreive the node status.")
+    elif nodestat == "INACTIVE":
+        print("A80101: Node is not joined.")
+        log.error(f"A80101: Node is not joined. (status={nodestat})")
+        e = 3
+    else:
+        print("A80102: Confirm node status.")
+        log.error(f"A80102: Node is the wrong status to leave. (status={nodestat})")
     sys.exit(e)
 
 if not options.force:
@@ -83,12 +86,12 @@ if options.wait_time is not None:
             e = 2
             break
     util.wait_error_case(e,log,"\nLeaved node")
-    log.info("%s end." % (__file__))
+    log.info(f"{__file__} end.")
     sys.exit(e)
 
 if code != 200:
     log.error("A80105: Failed to leave")
     sys.exit(1)
 
-log.info("%s end." % (__file__))
+log.info(f"{__file__} end.")
 

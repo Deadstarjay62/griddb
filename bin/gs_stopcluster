@@ -12,9 +12,11 @@ import util
 util.install_sigint_handler()
 (homedir,logdir) = util.get_required_env()
 
-parser = OptionParser(usage="%prog [-w [WAIT_TIME]]" + util.CLIENT_OPTIONS_USAGE,
-                      description="Stops a cluster.",
-            version="%prog [V2.8.00]")
+parser = OptionParser(
+    usage=f"%prog [-w [WAIT_TIME]]{util.CLIENT_OPTIONS_USAGE}",
+    description="Stops a cluster.",
+    version="%prog [V2.8.00]",
+)
 util.add_client_options(parser)
 parser.add_option("-w", "--wait", action='callback', callback=\
                     util.optional_arg(0), dest="wait_time",default=None,
@@ -32,7 +34,7 @@ if options.wait_time is not None:
         sys.exit(2)
 
 log = log.logger(__file__, log.DEBUG)
-log.info("%s start." % (__file__))
+log.info(f"{__file__} start.")
 tmpoptions = copy.deepcopy(options)
 tmpoptions.password = "***"
 log.info(tmpoptions)
@@ -41,16 +43,15 @@ e = 0
 nodestat: Optional[str] = util.get_nodestat(options, log)
 if nodestat != "ACTIVE":
     e = 1
-    if nodestat is not None:
-        if nodestat == "INACTIVE":
-            print("AF0101: Node is not joined.")
-            log.error("AF0101: Node is not joined. (status="+nodestat+")")
-            e = 3
-        else:
-            print("AF0102: Confirm node status.")
-            log.error("AF0102: Confirm node status (status="+nodestat+")")
-    else:
+    if nodestat is None:
         log.error("AF0106: Failed to stop cluster.")
+    elif nodestat == "INACTIVE":
+        print("AF0101: Node is not joined.")
+        log.error(f"AF0101: Node is not joined. (status={nodestat})")
+        e = 3
+    else:
+        print("AF0102: Confirm node status.")
+        log.error(f"AF0102: Confirm node status (status={nodestat})")
     sys.exit(e)
 
 c = util.is_active_cluster(options, log)
@@ -69,7 +70,7 @@ if options.server is None:
     log.info("AF0105: Getting address failed.")
     sys.exit(1)
 
-log.info("request stop cluster (master="+options.server+":"+str(options.port)+")")
+log.info(f"request stop cluster (master={options.server}:{str(options.port)})")
 method = "POST"
 path = "/cluster/stop"
 data = {}
@@ -88,12 +89,12 @@ if options.wait_time is not None:
             e = 2
             break
     util.wait_error_case(e,log,"\nStopped cluster")
-    log.info("%s end." % (__file__))
+    log.info(f"{__file__} end.")
     sys.exit(e)
 
 if code != 200:
     log.error("AF0107: Failed to stop cluster.")
     sys.exit(1)
 
-log.info("%s end." % (__file__))
+log.info(f"{__file__} end.")
 
